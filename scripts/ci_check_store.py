@@ -39,6 +39,12 @@ def write_github_output(name: str, value: str) -> None:
     output_path = os.environ.get("GITHUB_OUTPUT")
     if not output_path:
         return
+    # Register both the serialized output and its individual cookie values
+    # before a later step receives them. Escape workflow-command data.
+    for sensitive in [value, *json.loads(value).values()]:
+        if sensitive:
+            escaped = sensitive.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+            print(f"::add-mask::{escaped}", flush=True)
     delimiter = "GHADELIM"
     with open(output_path, "a", encoding="utf-8") as f:
         f.write(f"{name}<<{delimiter}\n{value}\n{delimiter}\n")
